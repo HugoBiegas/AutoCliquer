@@ -3,7 +3,6 @@
 Application d'auto-clicker moderne avec interface graphique, développée en Python.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)
 
 ## Fonctionnalités
@@ -129,11 +128,3 @@ Interface d'enregistrement et de lecture de séquences de clics avec support mul
 
 - **Failsafe** : Déplacez la souris dans un coin de l'écran pour arrêter automatiquement (fonctionnalité pyautogui)
 - **Escape** : Appuyez sur Escape à tout moment pour tout arrêter
-
-## Licence
-
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
-## Auteur
-
-Développé avec l'assistance de Claude (Anthropic).
