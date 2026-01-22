@@ -1,0 +1,282 @@
+import customtkinter as ctk
+from pynput import mouse
+
+
+class SimpleClickerTab:
+    def __init__(self, parent, clicker, hotkey, bg_color, accent_color, secondary_color, text_color):
+        self.parent = parent
+        self.clicker = clicker
+        self.hotkey = hotkey
+        self.bg_color = bg_color
+        self.accent_color = accent_color
+        self.secondary_color = secondary_color
+        self.text_color = text_color
+
+        self.clicker.on_status_change = lambda running: self.parent.after(0, self.update_status)
+        self.capture_listener = None
+        self.is_capturing = False
+
+        self._create_widgets()
+
+    def _create_widgets(self):
+        # Frame principal
+        main_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Frame pour le contenu (scrollable si besoin)
+        content_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        content_frame.pack(fill="both", expand=True)
+
+        # Section Intervalle
+        self._create_section_label(content_frame, "Intervalle entre clics")
+        interval_frame = ctk.CTkFrame(content_frame, fg_color=self.secondary_color, corner_radius=8)
+        interval_frame.pack(fill="x", pady=(0, 10))
+
+        interval_inner = ctk.CTkFrame(interval_frame, fg_color="transparent")
+        interval_inner.pack(expand=True, pady=10)
+
+        self.interval_entry = ctk.CTkEntry(
+            interval_inner,
+            width=100,
+            placeholder_text="100",
+            fg_color=self.bg_color,
+            text_color=self.text_color,
+            border_color=self.accent_color
+        )
+        self.interval_entry.pack(side="left", padx=(0, 10))
+        self.interval_entry.insert(0, "100")
+
+        ctk.CTkLabel(
+            interval_inner,
+            text="millisecondes",
+            text_color=self.text_color
+        ).pack(side="left")
+
+        # Section Type de clic
+        self._create_section_label(content_frame, "Type de clic")
+        click_type_frame = ctk.CTkFrame(content_frame, fg_color=self.secondary_color, corner_radius=8)
+        click_type_frame.pack(fill="x", pady=(0, 10))
+
+        click_type_inner = ctk.CTkFrame(click_type_frame, fg_color="transparent")
+        click_type_inner.pack(expand=True, pady=10)
+
+        self.click_type_var = ctk.StringVar(value="left")
+        for text, value in [("Gauche", "left"), ("Droit", "right"), ("Molette", "middle")]:
+            ctk.CTkRadioButton(
+                click_type_inner,
+                text=text,
+                variable=self.click_type_var,
+                value=value,
+                fg_color=self.accent_color,
+                hover_color="#c73e54",
+                text_color=self.text_color,
+                width=20
+            ).pack(side="left", padx=12)
+
+        # Section Repetitions
+        self._create_section_label(content_frame, "Repetitions")
+        rep_frame = ctk.CTkFrame(content_frame, fg_color=self.secondary_color, corner_radius=8)
+        rep_frame.pack(fill="x", pady=(0, 10))
+
+        rep_inner = ctk.CTkFrame(rep_frame, fg_color="transparent")
+        rep_inner.pack(expand=True, pady=10)
+
+        self.infinite_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(
+            rep_inner,
+            text="Infini",
+            variable=self.infinite_var,
+            fg_color=self.accent_color,
+            hover_color="#c73e54",
+            text_color=self.text_color,
+            command=self._toggle_count_entry
+        ).pack(side="left", padx=(0, 10))
+
+        ctk.CTkLabel(rep_inner, text="ou", text_color=self.text_color).pack(side="left", padx=5)
+
+        self.count_entry = ctk.CTkEntry(
+            rep_inner,
+            width=80,
+            placeholder_text="10",
+            fg_color=self.bg_color,
+            text_color=self.text_color,
+            border_color=self.accent_color,
+            state="disabled"
+        )
+        self.count_entry.pack(side="left", padx=5)
+        self.count_entry.insert(0, "10")
+
+        ctk.CTkLabel(rep_inner, text="clics", text_color=self.text_color).pack(side="left", padx=(5, 0))
+
+        # Section Position
+        self._create_section_label(content_frame, "Position")
+        pos_frame = ctk.CTkFrame(content_frame, fg_color=self.secondary_color, corner_radius=8)
+        pos_frame.pack(fill="x", pady=(0, 5))
+
+        pos_inner = ctk.CTkFrame(pos_frame, fg_color="transparent")
+        pos_inner.pack(expand=True, pady=10)
+
+        self.use_cursor_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(
+            pos_inner,
+            text="Suivre le curseur",
+            variable=self.use_cursor_var,
+            fg_color=self.accent_color,
+            hover_color="#c73e54",
+            text_color=self.text_color,
+            command=self._toggle_position_entries
+        ).pack()
+
+        # Frame pour position fixe avec bouton capture
+        pos_fixed_frame = ctk.CTkFrame(content_frame, fg_color=self.secondary_color, corner_radius=8)
+        pos_fixed_frame.pack(fill="x", pady=(0, 5))
+
+        pos_fixed_inner = ctk.CTkFrame(pos_fixed_frame, fg_color="transparent")
+        pos_fixed_inner.pack(expand=True, pady=10)
+
+        self.capture_button = ctk.CTkButton(
+            pos_fixed_inner,
+            text="Capturer position",
+            font=ctk.CTkFont(size=12),
+            fg_color="#0f3460",
+            hover_color="#1a4a7a",
+            width=130,
+            command=self._start_capture,
+            state="disabled"
+        )
+        self.capture_button.pack(side="left", padx=(0, 15))
+
+        ctk.CTkLabel(pos_fixed_inner, text="X:", text_color=self.text_color).pack(side="left")
+        self.x_entry = ctk.CTkEntry(
+            pos_fixed_inner,
+            width=55,
+            fg_color=self.bg_color,
+            text_color=self.text_color,
+            border_color=self.accent_color,
+            state="disabled"
+        )
+        self.x_entry.pack(side="left", padx=(5, 10))
+        self.x_entry.insert(0, "0")
+
+        ctk.CTkLabel(pos_fixed_inner, text="Y:", text_color=self.text_color).pack(side="left")
+        self.y_entry = ctk.CTkEntry(
+            pos_fixed_inner,
+            width=55,
+            fg_color=self.bg_color,
+            text_color=self.text_color,
+            border_color=self.accent_color,
+            state="disabled"
+        )
+        self.y_entry.pack(side="left", padx=5)
+        self.y_entry.insert(0, "0")
+
+        # Bouton principal (dans main_frame, en bas)
+        self.start_button = ctk.CTkButton(
+            main_frame,
+            text=f"DEMARRER ({self.hotkey.upper()})",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            fg_color=self.accent_color,
+            hover_color="#c73e54",
+            height=50,
+            corner_radius=8,
+            command=self.toggle_clicker
+        )
+        self.start_button.pack(side="bottom", fill="x", pady=(10, 0))
+
+    def _create_section_label(self, parent, text):
+        ctk.CTkLabel(
+            parent,
+            text=text,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color=self.text_color,
+            anchor="w"
+        ).pack(fill="x", pady=(5, 5))
+
+    def _toggle_count_entry(self):
+        if self.infinite_var.get():
+            self.count_entry.configure(state="disabled")
+        else:
+            self.count_entry.configure(state="normal")
+
+    def _toggle_position_entries(self):
+        state = "disabled" if self.use_cursor_var.get() else "normal"
+        self.x_entry.configure(state=state)
+        self.y_entry.configure(state=state)
+        self.capture_button.configure(state=state)
+
+    def _start_capture(self):
+        if self.is_capturing:
+            return
+        self.is_capturing = True
+        self.capture_button.configure(text="Cliquez...", fg_color="#e94560")
+
+        def on_click(x, y, button, pressed):
+            if pressed:
+                self.parent.after(0, lambda: self._on_position_captured(int(x), int(y)))
+                return False
+
+        self.capture_listener = mouse.Listener(on_click=on_click)
+        self.capture_listener.start()
+
+    def _on_position_captured(self, x, y):
+        self.is_capturing = False
+        self.capture_button.configure(text="Capturer position", fg_color="#0f3460")
+
+        self.x_entry.configure(state="normal")
+        self.x_entry.delete(0, "end")
+        self.x_entry.insert(0, str(x))
+
+        self.y_entry.configure(state="normal")
+        self.y_entry.delete(0, "end")
+        self.y_entry.insert(0, str(y))
+
+        if self.use_cursor_var.get():
+            self.x_entry.configure(state="disabled")
+            self.y_entry.configure(state="disabled")
+
+    def toggle_clicker(self):
+        if self.clicker.is_running():
+            self.clicker.stop()
+        else:
+            self._apply_settings()
+            self.clicker.start()
+        self.update_status()
+
+    def _apply_settings(self):
+        try:
+            interval = int(self.interval_entry.get())
+        except ValueError:
+            interval = 100
+        self.clicker.set_interval(interval)
+
+        self.clicker.set_click_type(self.click_type_var.get())
+        self.clicker.set_infinite(self.infinite_var.get())
+
+        if not self.infinite_var.get():
+            try:
+                count = int(self.count_entry.get())
+            except ValueError:
+                count = 10
+            self.clicker.set_click_count(count)
+
+        use_cursor = self.use_cursor_var.get()
+        if not use_cursor:
+            try:
+                x = int(self.x_entry.get())
+                y = int(self.y_entry.get())
+            except ValueError:
+                x, y = 0, 0
+            self.clicker.set_fixed_position(True, x, y)
+        else:
+            self.clicker.set_fixed_position(False)
+
+    def set_hotkey(self, hotkey):
+        self.hotkey = hotkey
+        self.update_status()
+
+    def update_status(self):
+        key = self.hotkey.upper()
+        if self.clicker.is_running():
+            self.start_button.configure(text=f"ARRETER ({key})", fg_color="#c73e54")
+        else:
+            self.start_button.configure(text=f"DEMARRER ({key})", fg_color=self.accent_color)
