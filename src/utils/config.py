@@ -30,6 +30,20 @@ class Config:
                 "clicker": "f6",
                 "record": "f7",
                 "playback": "f8"
+            },
+            "simple_clicker": {
+                "interval": 100,
+                "click_type": "left",
+                "infinite": True,
+                "click_count": 10,
+                "follow_cursor": True,
+                "fixed_x": 0,
+                "fixed_y": 0
+            },
+            "macro": {
+                "delay": 1000,
+                "infinite": True,
+                "loop_count": 1
             }
         }
 
@@ -60,6 +74,26 @@ class Config:
     def set_hotkeys(self, hotkeys):
         """Definit les raccourcis et sauvegarde"""
         self.data["hotkeys"] = hotkeys
+        self.save()
+
+    def get_simple_clicker_settings(self):
+        """Retourne les parametres du clic simple"""
+        default = self.default_config["simple_clicker"]
+        return self.data.get("simple_clicker", default).copy()
+
+    def set_simple_clicker_settings(self, settings):
+        """Definit les parametres du clic simple et sauvegarde"""
+        self.data["simple_clicker"] = settings
+        self.save()
+
+    def get_macro_settings(self):
+        """Retourne les parametres macro"""
+        default = self.default_config["macro"]
+        return self.data.get("macro", default).copy()
+
+    def set_macro_settings(self, settings):
+        """Definit les parametres macro et sauvegarde"""
+        self.data["macro"] = settings
         self.save()
 
     def save_autosave_script(self, points, delay):

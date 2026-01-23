@@ -3,9 +3,10 @@ from pynput import mouse
 
 
 class SimpleClickerTab:
-    def __init__(self, parent, clicker, hotkey, bg_color, accent_color, secondary_color, text_color):
+    def __init__(self, parent, clicker, config, hotkey, bg_color, accent_color, secondary_color, text_color):
         self.parent = parent
         self.clicker = clicker
+        self.config = config
         self.hotkey = hotkey
         self.bg_color = bg_color
         self.accent_color = accent_color
@@ -19,7 +20,11 @@ class SimpleClickerTab:
         # Liste des widgets a desactiver
         self.controls = []
 
+        # Charger les parametres sauvegardes
+        self.saved_settings = self.config.get_simple_clicker_settings()
+
         self._create_widgets()
+        self._load_settings()
 
     def _create_widgets(self):
         # Frame principal
@@ -258,6 +263,63 @@ class SimpleClickerTab:
             self.clicker.start()
         self.update_status()
 
+    def _load_settings(self):
+        """Charge les parametres sauvegardes"""
+        settings = self.saved_settings
+
+        # Intervalle
+        self.interval_entry.delete(0, "end")
+        self.interval_entry.insert(0, str(settings.get("interval", 100)))
+
+        # Type de clic
+        self.click_type_var.set(settings.get("click_type", "left"))
+
+        # Repetitions
+        self.infinite_var.set(settings.get("infinite", True))
+        self.count_entry.configure(state="normal")
+        self.count_entry.delete(0, "end")
+        self.count_entry.insert(0, str(settings.get("click_count", 10)))
+        self._toggle_count_entry()
+
+        # Position
+        self.use_cursor_var.set(settings.get("follow_cursor", True))
+        self.x_entry.configure(state="normal")
+        self.x_entry.delete(0, "end")
+        self.x_entry.insert(0, str(settings.get("fixed_x", 0)))
+        self.y_entry.configure(state="normal")
+        self.y_entry.delete(0, "end")
+        self.y_entry.insert(0, str(settings.get("fixed_y", 0)))
+        self._toggle_position_entries()
+
+    def _save_settings(self):
+        """Sauvegarde les parametres"""
+        try:
+            interval = int(self.interval_entry.get())
+        except ValueError:
+            interval = 100
+
+        try:
+            click_count = int(self.count_entry.get())
+        except ValueError:
+            click_count = 10
+
+        try:
+            fixed_x = int(self.x_entry.get())
+            fixed_y = int(self.y_entry.get())
+        except ValueError:
+            fixed_x, fixed_y = 0, 0
+
+        settings = {
+            "interval": interval,
+            "click_type": self.click_type_var.get(),
+            "infinite": self.infinite_var.get(),
+            "click_count": click_count,
+            "follow_cursor": self.use_cursor_var.get(),
+            "fixed_x": fixed_x,
+            "fixed_y": fixed_y
+        }
+        self.config.set_simple_clicker_settings(settings)
+
     def _apply_settings(self):
         try:
             interval = int(self.interval_entry.get())
@@ -285,6 +347,9 @@ class SimpleClickerTab:
             self.clicker.set_fixed_position(True, x, y)
         else:
             self.clicker.set_fixed_position(False)
+
+        # Sauvegarder les parametres
+        self._save_settings()
 
     def set_hotkey(self, hotkey):
         self.hotkey = hotkey

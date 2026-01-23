@@ -25,7 +25,11 @@ class ScriptRecorderTab:
         # Liste des widgets a desactiver
         self.controls = []
 
+        # Charger les parametres sauvegardes
+        self.saved_settings = self.config.get_macro_settings()
+
         self._create_widgets()
+        self._load_macro_settings()
 
     def _create_widgets(self):
         main_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
@@ -249,6 +253,42 @@ class ScriptRecorderTab:
                 self.script_player.start()
         self.update_status()
 
+    def _load_macro_settings(self):
+        """Charge les parametres macro sauvegardes"""
+        settings = self.saved_settings
+
+        # Delai (seulement si pas de points sauvegardes car autosave a la priorite)
+        autosave = self.config.load_autosave_script()
+        if not autosave or not autosave.get("points"):
+            self.delay_entry.delete(0, "end")
+            self.delay_entry.insert(0, str(settings.get("delay", 1000)))
+
+        # Repetitions
+        self.infinite_var.set(settings.get("infinite", True))
+        self.loop_entry.configure(state="normal")
+        self.loop_entry.delete(0, "end")
+        self.loop_entry.insert(0, str(settings.get("loop_count", 1)))
+        self._toggle_loop_entry()
+
+    def _save_macro_settings(self):
+        """Sauvegarde les parametres macro"""
+        try:
+            delay = int(self.delay_entry.get())
+        except ValueError:
+            delay = 1000
+
+        try:
+            loop_count = int(self.loop_entry.get())
+        except ValueError:
+            loop_count = 1
+
+        settings = {
+            "delay": delay,
+            "infinite": self.infinite_var.get(),
+            "loop_count": loop_count
+        }
+        self.config.set_macro_settings(settings)
+
     def _apply_settings(self):
         try:
             delay = int(self.delay_entry.get())
@@ -264,6 +304,9 @@ class ScriptRecorderTab:
             except ValueError:
                 loops = 1
             self.script_player.set_loop_count(loops)
+
+        # Sauvegarder les parametres
+        self._save_macro_settings()
 
     def _save_script(self):
         points = self.recorder.get_points()

@@ -99,6 +99,7 @@ class App(ctk.CTk):
         self.simple_tab = SimpleClickerTab(
             tab1,
             self.clicker,
+            self.config,
             hotkey=self.hotkeys["clicker"],
             bg_color=self.CARD_COLOR,
             accent_color=self.ACCENT_COLOR,
