@@ -39,6 +39,4 @@ env/
 scripts/*.json
 !scripts/.gitkeep
 
-# Configuration utilisateur
-autoclicker_config.json
-autoclicker_autosave.json
+# Configuration utilisateur (stockee dans AppData/AutoClicker/)

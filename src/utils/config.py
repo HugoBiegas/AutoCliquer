@@ -1,23 +1,29 @@
 import json
 import os
-import sys
 
 
 def get_config_dir():
-    """Retourne le dossier de config (a cote de l'exe ou dans le dossier courant)"""
-    if getattr(sys, 'frozen', False):
-        # Mode exe
-        return os.path.dirname(sys.executable)
+    """Retourne le dossier de config dans AppData (Windows)"""
+    # Utiliser AppData/Roaming sur Windows
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        config_dir = os.path.join(appdata, "AutoClicker")
     else:
-        # Mode script
-        return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        # Fallback: dossier home de l'utilisateur
+        config_dir = os.path.join(os.path.expanduser("~"), ".autoclicker")
+
+    # Creer le dossier s'il n'existe pas
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+
+    return config_dir
 
 
 class Config:
     def __init__(self):
         self.config_dir = get_config_dir()
-        self.config_file = os.path.join(self.config_dir, "autoclicker_config.json")
-        self.autosave_file = os.path.join(self.config_dir, "autoclicker_autosave.json")
+        self.config_file = os.path.join(self.config_dir, "config.json")
+        self.autosave_file = os.path.join(self.config_dir, "autosave.json")
 
         self.default_config = {
             "hotkeys": {
