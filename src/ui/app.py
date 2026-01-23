@@ -199,13 +199,19 @@ class App(ctk.CTk):
             self.script_tab.delay_entry.insert(0, str(data["delay"]))
 
     def _on_f6(self):
-        self.after(0, self.simple_tab.toggle_clicker)
+        # Autoriser seulement si clicker actif (pour arreter) ou aucune action en cours
+        if self.clicker.is_running() or not (self.recorder.is_recording() or self.script_player.is_running()):
+            self.after(0, self.simple_tab.toggle_clicker)
 
     def _on_f7(self):
-        self.after(0, self.script_tab.toggle_recording)
+        # Autoriser seulement si enregistrement actif (pour arreter) ou aucune action en cours
+        if self.recorder.is_recording() or not (self.clicker.is_running() or self.script_player.is_running()):
+            self.after(0, self.script_tab.toggle_recording)
 
     def _on_f8(self):
-        self.after(0, self.script_tab.toggle_playback)
+        # Autoriser seulement si lecture active (pour arreter) ou aucune action en cours
+        if self.script_player.is_running() or not (self.clicker.is_running() or self.recorder.is_recording()):
+            self.after(0, self.script_tab.toggle_playback)
 
     def _on_escape(self):
         self.after(0, self._stop_all)
