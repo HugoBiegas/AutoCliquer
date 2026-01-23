@@ -1,12 +1,15 @@
 import json
 import os
 from datetime import datetime
+from .config import get_config_dir
 
 
 class FileManager:
-    def __init__(self, scripts_dir: str = "scripts"):
-        self.scripts_dir = scripts_dir
-        os.makedirs(scripts_dir, exist_ok=True)
+    def __init__(self):
+        # Utiliser le dossier AppData pour les scripts
+        config_dir = get_config_dir()
+        self.scripts_dir = os.path.join(config_dir, "scripts")
+        os.makedirs(self.scripts_dir, exist_ok=True)
 
     def save_script(self, points: list, delay: int, filename: str = None) -> str:
         if not filename:

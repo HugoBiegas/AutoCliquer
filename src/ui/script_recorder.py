@@ -340,7 +340,7 @@ class ScriptRecorderTab:
         filepath = filedialog.asksaveasfilename(
             defaultextension=".json",
             filetypes=[("JSON files", "*.json")],
-            initialdir="scripts"
+            initialdir=self.file_manager.scripts_dir
         )
         if filepath:
             self.file_manager.save_script(points, delay, filepath)
@@ -348,7 +348,7 @@ class ScriptRecorderTab:
     def _load_script(self):
         filepath = filedialog.askopenfilename(
             filetypes=[("JSON files", "*.json")],
-            initialdir="scripts"
+            initialdir=self.file_manager.scripts_dir
         )
         if filepath:
             try:
