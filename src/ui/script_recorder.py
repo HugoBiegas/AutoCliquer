@@ -98,6 +98,8 @@ class ScriptRecorderTab:
         )
         self.delay_entry.pack(side="left", padx=(0, 10))
         self.delay_entry.insert(0, "1000")
+        self.delay_entry.bind("<FocusOut>", lambda e: self._save_macro_settings())
+        self.delay_entry.bind("<Return>", lambda e: self._save_macro_settings())
         self.controls.append(self.delay_entry)
 
         ctk.CTkLabel(
@@ -121,7 +123,7 @@ class ScriptRecorderTab:
             fg_color=self.accent_color,
             hover_color="#c73e54",
             text_color=self.text_color,
-            command=self._toggle_loop_entry
+            command=self._on_infinite_change
         )
         self.infinite_checkbox.pack(side="left", padx=(0, 10))
         self.controls.append(self.infinite_checkbox)
@@ -139,6 +141,8 @@ class ScriptRecorderTab:
         )
         self.loop_entry.pack(side="left", padx=5)
         self.loop_entry.insert(0, "1")
+        self.loop_entry.bind("<FocusOut>", lambda e: self._save_macro_settings())
+        self.loop_entry.bind("<Return>", lambda e: self._save_macro_settings())
         self.controls.append(self.loop_entry)
 
         ctk.CTkLabel(rep_inner, text="boucles", text_color=self.text_color).pack(side="left", padx=(5, 0))
@@ -200,6 +204,11 @@ class ScriptRecorderTab:
             self.loop_entry.configure(state="disabled")
         else:
             self.loop_entry.configure(state="normal")
+
+    def _on_infinite_change(self):
+        """Callback quand la case boucle infinie change"""
+        self._toggle_loop_entry()
+        self._save_macro_settings()
 
     def _add_point_to_list(self, point):
         self.points_textbox.configure(state="normal")

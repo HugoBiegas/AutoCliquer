@@ -53,6 +53,8 @@ class SimpleClickerTab:
         )
         self.interval_entry.pack(side="left", padx=(0, 10))
         self.interval_entry.insert(0, "100")
+        self.interval_entry.bind("<FocusOut>", lambda e: self._save_settings())
+        self.interval_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.interval_entry)
 
         ctk.CTkLabel(
@@ -70,6 +72,7 @@ class SimpleClickerTab:
         click_type_inner.pack(expand=True, pady=10)
 
         self.click_type_var = ctk.StringVar(value="left")
+        self.click_type_var.trace_add("write", lambda *args: self._save_settings())
         self.radio_buttons = []
         for text, value in [("Gauche", "left"), ("Droit", "right"), ("Molette", "middle")]:
             rb = ctk.CTkRadioButton(
@@ -102,7 +105,7 @@ class SimpleClickerTab:
             fg_color=self.accent_color,
             hover_color="#c73e54",
             text_color=self.text_color,
-            command=self._toggle_count_entry
+            command=self._on_infinite_change
         )
         self.infinite_checkbox.pack(side="left", padx=(0, 10))
         self.controls.append(self.infinite_checkbox)
@@ -120,6 +123,8 @@ class SimpleClickerTab:
         )
         self.count_entry.pack(side="left", padx=5)
         self.count_entry.insert(0, "10")
+        self.count_entry.bind("<FocusOut>", lambda e: self._save_settings())
+        self.count_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.count_entry)
 
         ctk.CTkLabel(rep_inner, text="clics", text_color=self.text_color).pack(side="left", padx=(5, 0))
@@ -140,7 +145,7 @@ class SimpleClickerTab:
             fg_color=self.accent_color,
             hover_color="#c73e54",
             text_color=self.text_color,
-            command=self._toggle_position_entries
+            command=self._on_cursor_change
         )
         self.cursor_checkbox.pack()
         self.controls.append(self.cursor_checkbox)
@@ -176,6 +181,8 @@ class SimpleClickerTab:
         )
         self.x_entry.pack(side="left", padx=(5, 10))
         self.x_entry.insert(0, "0")
+        self.x_entry.bind("<FocusOut>", lambda e: self._save_settings())
+        self.x_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.x_entry)
 
         ctk.CTkLabel(pos_fixed_inner, text="Y:", text_color=self.text_color).pack(side="left")
@@ -189,6 +196,8 @@ class SimpleClickerTab:
         )
         self.y_entry.pack(side="left", padx=5)
         self.y_entry.insert(0, "0")
+        self.y_entry.bind("<FocusOut>", lambda e: self._save_settings())
+        self.y_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.y_entry)
 
         # Bouton principal (dans main_frame, en bas)
@@ -219,11 +228,21 @@ class SimpleClickerTab:
         else:
             self.count_entry.configure(state="normal")
 
+    def _on_infinite_change(self):
+        """Callback quand la case infini change"""
+        self._toggle_count_entry()
+        self._save_settings()
+
     def _toggle_position_entries(self):
         state = "disabled" if self.use_cursor_var.get() else "normal"
         self.x_entry.configure(state=state)
         self.y_entry.configure(state=state)
         self.capture_button.configure(state=state)
+
+    def _on_cursor_change(self):
+        """Callback quand la case suivre curseur change"""
+        self._toggle_position_entries()
+        self._save_settings()
 
     def _start_capture(self):
         if self.is_capturing:
@@ -254,6 +273,9 @@ class SimpleClickerTab:
         if self.use_cursor_var.get():
             self.x_entry.configure(state="disabled")
             self.y_entry.configure(state="disabled")
+
+        # Sauvegarder la position capturee
+        self._save_settings()
 
     def toggle_clicker(self):
         if self.clicker.is_running():
