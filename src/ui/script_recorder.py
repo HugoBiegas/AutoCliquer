@@ -31,6 +31,14 @@ class ScriptRecorderTab:
         self._create_widgets()
         self._load_macro_settings()
 
+    def _filter_number_input(self, entry):
+        """Filtre l'entree pour ne garder que les chiffres"""
+        current = entry.get()
+        filtered = ''.join(c for c in current if c.isdigit())
+        if current != filtered:
+            entry.delete(0, "end")
+            entry.insert(0, filtered)
+
     def _create_widgets(self):
         main_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -98,6 +106,7 @@ class ScriptRecorderTab:
         )
         self.delay_entry.pack(side="left", padx=(0, 10))
         self.delay_entry.insert(0, "1000")
+        self.delay_entry.bind("<KeyRelease>", lambda e: self._filter_number_input(self.delay_entry))
         self.delay_entry.bind("<FocusOut>", lambda e: self._save_macro_settings())
         self.delay_entry.bind("<Return>", lambda e: self._save_macro_settings())
         self.controls.append(self.delay_entry)
@@ -141,6 +150,7 @@ class ScriptRecorderTab:
         )
         self.loop_entry.pack(side="left", padx=5)
         self.loop_entry.insert(0, "1")
+        self.loop_entry.bind("<KeyRelease>", lambda e: self._filter_number_input(self.loop_entry))
         self.loop_entry.bind("<FocusOut>", lambda e: self._save_macro_settings())
         self.loop_entry.bind("<Return>", lambda e: self._save_macro_settings())
         self.controls.append(self.loop_entry)

@@ -26,6 +26,20 @@ class SimpleClickerTab:
         self._create_widgets()
         self._load_settings()
 
+    def _validate_number(self, text):
+        """Valide que le texte ne contient que des chiffres"""
+        if text == "":
+            return True
+        return text.isdigit()
+
+    def _filter_number_input(self, entry):
+        """Filtre l'entree pour ne garder que les chiffres"""
+        current = entry.get()
+        filtered = ''.join(c for c in current if c.isdigit())
+        if current != filtered:
+            entry.delete(0, "end")
+            entry.insert(0, filtered)
+
     def _create_widgets(self):
         # Frame principal
         main_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
@@ -53,6 +67,7 @@ class SimpleClickerTab:
         )
         self.interval_entry.pack(side="left", padx=(0, 10))
         self.interval_entry.insert(0, "100")
+        self.interval_entry.bind("<KeyRelease>", lambda e: self._filter_number_input(self.interval_entry))
         self.interval_entry.bind("<FocusOut>", lambda e: self._save_settings())
         self.interval_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.interval_entry)
@@ -123,6 +138,7 @@ class SimpleClickerTab:
         )
         self.count_entry.pack(side="left", padx=5)
         self.count_entry.insert(0, "10")
+        self.count_entry.bind("<KeyRelease>", lambda e: self._filter_number_input(self.count_entry))
         self.count_entry.bind("<FocusOut>", lambda e: self._save_settings())
         self.count_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.count_entry)
@@ -181,6 +197,7 @@ class SimpleClickerTab:
         )
         self.x_entry.pack(side="left", padx=(5, 10))
         self.x_entry.insert(0, "0")
+        self.x_entry.bind("<KeyRelease>", lambda e: self._filter_number_input(self.x_entry))
         self.x_entry.bind("<FocusOut>", lambda e: self._save_settings())
         self.x_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.x_entry)
@@ -196,6 +213,7 @@ class SimpleClickerTab:
         )
         self.y_entry.pack(side="left", padx=5)
         self.y_entry.insert(0, "0")
+        self.y_entry.bind("<KeyRelease>", lambda e: self._filter_number_input(self.y_entry))
         self.y_entry.bind("<FocusOut>", lambda e: self._save_settings())
         self.y_entry.bind("<Return>", lambda e: self._save_settings())
         self.controls.append(self.y_entry)
