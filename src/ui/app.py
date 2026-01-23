@@ -67,7 +67,7 @@ class App(ctk.CTk):
         title.pack(side="left", padx=20, pady=15)
 
         # Bouton Settings (roue crantee)
-        settings_btn = ctk.CTkButton(
+        self.settings_btn = ctk.CTkButton(
             header,
             text="\u2699",
             font=ctk.CTkFont(size=22),
@@ -78,7 +78,7 @@ class App(ctk.CTk):
             height=40,
             command=self._open_settings
         )
-        settings_btn.pack(side="right", padx=15, pady=10)
+        self.settings_btn.pack(side="right", padx=15, pady=10)
 
     def _create_tabs(self):
         # Conteneur des onglets
@@ -122,6 +122,11 @@ class App(ctk.CTk):
             text_color=self.TEXT_COLOR
         )
 
+        # Configurer les callbacks pour le verrouillage
+        self.clicker.on_status_change = lambda running: self.after(0, lambda: self._on_clicker_status(running))
+        self.recorder.on_status_change = lambda recording: self.after(0, lambda: self._on_recorder_status(recording))
+        self.script_player.on_status_change = lambda running: self.after(0, lambda: self._on_player_status(running))
+
     def _setup_hotkeys(self):
         self.hotkey_manager.register_custom(
             keys=self.hotkeys,
@@ -134,6 +139,54 @@ class App(ctk.CTk):
     def _update_button_texts(self):
         self.simple_tab.set_hotkey(self.hotkeys["clicker"])
         self.script_tab.set_hotkeys(self.hotkeys["record"], self.hotkeys["playback"])
+
+    def _on_clicker_status(self, running):
+        """Callback quand le clicker demarre/arrete"""
+        self.simple_tab.update_status()
+        if running:
+            # Verrouiller tout sauf le bouton d'arret
+            self.simple_tab.set_locked(True, keep_button=True)
+            self.script_tab.set_locked(True)
+            self.settings_btn.configure(state="disabled")
+            self.tabview.configure(state="disabled")
+        else:
+            # Deverrouiller tout
+            self.simple_tab.set_locked(False)
+            self.script_tab.set_locked(False)
+            self.settings_btn.configure(state="normal")
+            self.tabview.configure(state="normal")
+
+    def _on_recorder_status(self, recording):
+        """Callback quand l'enregistrement demarre/arrete"""
+        self.script_tab.update_status()
+        if recording:
+            # Verrouiller tout sauf le bouton d'arret
+            self.simple_tab.set_locked(True)
+            self.script_tab.set_locked(True, active_button="record")
+            self.settings_btn.configure(state="disabled")
+            self.tabview.configure(state="disabled")
+        else:
+            # Deverrouiller tout
+            self.simple_tab.set_locked(False)
+            self.script_tab.set_locked(False)
+            self.settings_btn.configure(state="normal")
+            self.tabview.configure(state="normal")
+
+    def _on_player_status(self, running):
+        """Callback quand la lecture demarre/arrete"""
+        self.script_tab.update_status()
+        if running:
+            # Verrouiller tout sauf le bouton d'arret
+            self.simple_tab.set_locked(True)
+            self.script_tab.set_locked(True, active_button="play")
+            self.settings_btn.configure(state="disabled")
+            self.tabview.configure(state="disabled")
+        else:
+            # Deverrouiller tout
+            self.simple_tab.set_locked(False)
+            self.script_tab.set_locked(False)
+            self.settings_btn.configure(state="normal")
+            self.tabview.configure(state="normal")
 
     def _load_autosave(self):
         """Charge le script sauvegarde automatiquement"""
@@ -160,6 +213,11 @@ class App(ctk.CTk):
         self.clicker.stop()
         self.recorder.stop()
         self.script_player.stop()
+        # Deverrouiller tout
+        self.simple_tab.set_locked(False)
+        self.script_tab.set_locked(False)
+        self.settings_btn.configure(state="normal")
+        self.tabview.configure(state="normal")
         self.simple_tab.update_status()
         self.script_tab.update_status()
 

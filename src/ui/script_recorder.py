@@ -22,6 +22,9 @@ class ScriptRecorderTab:
         self.recorder.on_status_change = lambda r: self.parent.after(0, self.update_status)
         self.script_player.on_status_change = lambda r: self.parent.after(0, self.update_status)
 
+        # Liste des widgets a desactiver
+        self.controls = []
+
         self._create_widgets()
 
     def _create_widgets(self):
@@ -46,7 +49,7 @@ class ScriptRecorderTab:
         )
         self.record_button.pack(side="left", padx=(0, 10))
 
-        ctk.CTkButton(
+        self.clear_button = ctk.CTkButton(
             rec_inner,
             text="Effacer",
             font=ctk.CTkFont(size=14),
@@ -54,7 +57,9 @@ class ScriptRecorderTab:
             hover_color="#1a4a7a",
             width=100,
             command=self._clear_points
-        ).pack(side="left")
+        )
+        self.clear_button.pack(side="left")
+        self.controls.append(self.clear_button)
 
         # Liste des points
         self._create_section_label(main_frame, "Points enregistres")
@@ -89,6 +94,7 @@ class ScriptRecorderTab:
         )
         self.delay_entry.pack(side="left", padx=(0, 10))
         self.delay_entry.insert(0, "1000")
+        self.controls.append(self.delay_entry)
 
         ctk.CTkLabel(
             delay_inner,
@@ -104,7 +110,7 @@ class ScriptRecorderTab:
         rep_inner.pack(expand=True, pady=10)
 
         self.infinite_var = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(
+        self.infinite_checkbox = ctk.CTkCheckBox(
             rep_inner,
             text="Boucle infinie",
             variable=self.infinite_var,
@@ -112,7 +118,9 @@ class ScriptRecorderTab:
             hover_color="#c73e54",
             text_color=self.text_color,
             command=self._toggle_loop_entry
-        ).pack(side="left", padx=(0, 10))
+        )
+        self.infinite_checkbox.pack(side="left", padx=(0, 10))
+        self.controls.append(self.infinite_checkbox)
 
         ctk.CTkLabel(rep_inner, text="ou", text_color=self.text_color).pack(side="left", padx=5)
 
@@ -127,6 +135,7 @@ class ScriptRecorderTab:
         )
         self.loop_entry.pack(side="left", padx=5)
         self.loop_entry.insert(0, "1")
+        self.controls.append(self.loop_entry)
 
         ctk.CTkLabel(rep_inner, text="boucles", text_color=self.text_color).pack(side="left", padx=(5, 0))
 
@@ -137,7 +146,7 @@ class ScriptRecorderTab:
         file_inner = ctk.CTkFrame(file_frame, fg_color="transparent")
         file_inner.pack(expand=True)
 
-        ctk.CTkButton(
+        self.save_button = ctk.CTkButton(
             file_inner,
             text="Sauvegarder",
             font=ctk.CTkFont(size=14),
@@ -145,9 +154,11 @@ class ScriptRecorderTab:
             hover_color="#1a4a7a",
             width=120,
             command=self._save_script
-        ).pack(side="left", padx=(0, 10))
+        )
+        self.save_button.pack(side="left", padx=(0, 10))
+        self.controls.append(self.save_button)
 
-        ctk.CTkButton(
+        self.load_button = ctk.CTkButton(
             file_inner,
             text="Charger",
             font=ctk.CTkFont(size=14),
@@ -155,7 +166,9 @@ class ScriptRecorderTab:
             hover_color="#1a4a7a",
             width=120,
             command=self._load_script
-        ).pack(side="left")
+        )
+        self.load_button.pack(side="left")
+        self.controls.append(self.load_button)
 
         # Bouton principal
         self.play_button = ctk.CTkButton(
@@ -305,3 +318,25 @@ class ScriptRecorderTab:
             self.record_button.configure(state="normal")
             self.play_button.configure(text=f"LANCER ({play_key})", fg_color=self.accent_color)
             self.play_button.configure(state="normal")
+
+    def set_locked(self, locked, active_button=None):
+        """Verrouille ou deverrouille tous les controles
+        active_button: 'record' ou 'play' pour garder ce bouton actif
+        """
+        state = "disabled" if locked else "normal"
+        for control in self.controls:
+            control.configure(state=state)
+
+        if locked:
+            self.record_button.configure(state="disabled")
+            self.play_button.configure(state="disabled")
+            # Garder le bouton actif
+            if active_button == "record":
+                self.record_button.configure(state="normal")
+            elif active_button == "play":
+                self.play_button.configure(state="normal")
+        else:
+            self.record_button.configure(state="normal")
+            self.play_button.configure(state="normal")
+            # Restaurer l'etat special
+            self._toggle_loop_entry()

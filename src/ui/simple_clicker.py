@@ -16,6 +16,9 @@ class SimpleClickerTab:
         self.capture_listener = None
         self.is_capturing = False
 
+        # Liste des widgets a desactiver
+        self.controls = []
+
         self._create_widgets()
 
     def _create_widgets(self):
@@ -45,6 +48,7 @@ class SimpleClickerTab:
         )
         self.interval_entry.pack(side="left", padx=(0, 10))
         self.interval_entry.insert(0, "100")
+        self.controls.append(self.interval_entry)
 
         ctk.CTkLabel(
             interval_inner,
@@ -61,8 +65,9 @@ class SimpleClickerTab:
         click_type_inner.pack(expand=True, pady=10)
 
         self.click_type_var = ctk.StringVar(value="left")
+        self.radio_buttons = []
         for text, value in [("Gauche", "left"), ("Droit", "right"), ("Molette", "middle")]:
-            ctk.CTkRadioButton(
+            rb = ctk.CTkRadioButton(
                 click_type_inner,
                 text=text,
                 variable=self.click_type_var,
@@ -71,7 +76,10 @@ class SimpleClickerTab:
                 hover_color="#c73e54",
                 text_color=self.text_color,
                 width=20
-            ).pack(side="left", padx=12)
+            )
+            rb.pack(side="left", padx=12)
+            self.radio_buttons.append(rb)
+            self.controls.append(rb)
 
         # Section Repetitions
         self._create_section_label(content_frame, "Repetitions")
@@ -82,7 +90,7 @@ class SimpleClickerTab:
         rep_inner.pack(expand=True, pady=10)
 
         self.infinite_var = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(
+        self.infinite_checkbox = ctk.CTkCheckBox(
             rep_inner,
             text="Infini",
             variable=self.infinite_var,
@@ -90,7 +98,9 @@ class SimpleClickerTab:
             hover_color="#c73e54",
             text_color=self.text_color,
             command=self._toggle_count_entry
-        ).pack(side="left", padx=(0, 10))
+        )
+        self.infinite_checkbox.pack(side="left", padx=(0, 10))
+        self.controls.append(self.infinite_checkbox)
 
         ctk.CTkLabel(rep_inner, text="ou", text_color=self.text_color).pack(side="left", padx=5)
 
@@ -105,6 +115,7 @@ class SimpleClickerTab:
         )
         self.count_entry.pack(side="left", padx=5)
         self.count_entry.insert(0, "10")
+        self.controls.append(self.count_entry)
 
         ctk.CTkLabel(rep_inner, text="clics", text_color=self.text_color).pack(side="left", padx=(5, 0))
 
@@ -117,7 +128,7 @@ class SimpleClickerTab:
         pos_inner.pack(expand=True, pady=10)
 
         self.use_cursor_var = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(
+        self.cursor_checkbox = ctk.CTkCheckBox(
             pos_inner,
             text="Suivre le curseur",
             variable=self.use_cursor_var,
@@ -125,7 +136,9 @@ class SimpleClickerTab:
             hover_color="#c73e54",
             text_color=self.text_color,
             command=self._toggle_position_entries
-        ).pack()
+        )
+        self.cursor_checkbox.pack()
+        self.controls.append(self.cursor_checkbox)
 
         # Frame pour position fixe avec bouton capture
         pos_fixed_frame = ctk.CTkFrame(content_frame, fg_color=self.secondary_color, corner_radius=8)
@@ -145,6 +158,7 @@ class SimpleClickerTab:
             state="disabled"
         )
         self.capture_button.pack(side="left", padx=(0, 15))
+        self.controls.append(self.capture_button)
 
         ctk.CTkLabel(pos_fixed_inner, text="X:", text_color=self.text_color).pack(side="left")
         self.x_entry = ctk.CTkEntry(
@@ -157,6 +171,7 @@ class SimpleClickerTab:
         )
         self.x_entry.pack(side="left", padx=(5, 10))
         self.x_entry.insert(0, "0")
+        self.controls.append(self.x_entry)
 
         ctk.CTkLabel(pos_fixed_inner, text="Y:", text_color=self.text_color).pack(side="left")
         self.y_entry = ctk.CTkEntry(
@@ -169,6 +184,7 @@ class SimpleClickerTab:
         )
         self.y_entry.pack(side="left", padx=5)
         self.y_entry.insert(0, "0")
+        self.controls.append(self.y_entry)
 
         # Bouton principal (dans main_frame, en bas)
         self.start_button = ctk.CTkButton(
@@ -280,3 +296,17 @@ class SimpleClickerTab:
             self.start_button.configure(text=f"ARRETER ({key})", fg_color="#c73e54")
         else:
             self.start_button.configure(text=f"DEMARRER ({key})", fg_color=self.accent_color)
+
+    def set_locked(self, locked, keep_button=False):
+        """Verrouille ou deverrouille tous les controles"""
+        state = "disabled" if locked else "normal"
+        for control in self.controls:
+            control.configure(state=state)
+
+        if locked and not keep_button:
+            self.start_button.configure(state="disabled")
+        elif not locked:
+            self.start_button.configure(state="normal")
+            # Restaurer les etats speciaux
+            self._toggle_count_entry()
+            self._toggle_position_entries()
