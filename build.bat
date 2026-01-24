@@ -12,7 +12,9 @@ echo.
 
 pyinstaller --noconfirm --onefile --windowed ^
     --name "AutoClicker" ^
+    --icon "assets/icon.ico" ^
     --add-data "src;src" ^
+    --add-data "assets;assets" ^
     --hidden-import "pynput.keyboard._win32" ^
     --hidden-import "pynput.mouse._win32" ^
     main.py

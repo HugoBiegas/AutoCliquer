@@ -1,4 +1,6 @@
 import customtkinter as ctk
+import os
+import sys
 from .simple_clicker import SimpleClickerTab
 from .script_recorder import ScriptRecorderTab
 from ..core.clicker import Clicker, ScriptPlayer
@@ -6,6 +8,17 @@ from ..core.recorder import Recorder
 from ..core.hotkeys import HotkeyManager
 from ..utils.file_manager import FileManager
 from ..utils.config import Config
+
+
+def get_icon_path():
+    """Retourne le chemin vers l'icone"""
+    if getattr(sys, 'frozen', False):
+        # Executable PyInstaller
+        base_path = sys._MEIPASS
+    else:
+        # Mode developpement
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return os.path.join(base_path, "assets", "icon.ico")
 
 
 class App(ctk.CTk):
@@ -26,6 +39,11 @@ class App(ctk.CTk):
         self.geometry("450x640")
         self.resizable(False, False)
         self.configure(fg_color=self.BG_COLOR)
+
+        # Definir l'icone
+        icon_path = get_icon_path()
+        if os.path.exists(icon_path):
+            self.iconbitmap(icon_path)
 
         # Initialisation des composants
         self.config = Config()
